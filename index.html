@@ -7,8 +7,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Search</title>
     <link rel="icon" href="favicon.ico">
-    <!-- jQuery -->
-    <script src="https://lf26-cdn-tos.bytecdntp.com/cdn/expire-1-y/jquery/3.6.0/jquery.min.js"></script>
+    <script>
+        // 独立于第三方依赖的载入兜底，外部资源超时也不会永久遮住页面。
+        window.setTimeout(function () {
+            var loadingBox = document.getElementById('loading-box');
+            var bg = document.getElementById('bg');
+            var section = document.getElementById('section');
+            var cover = document.querySelector('.cover');
+
+            if (loadingBox) loadingBox.classList.add('loaded');
+            if (bg) bg.style.cssText = 'transform: scale(1);filter: blur(0px);transition: ease 1.5s;';
+            if (section) section.style.cssText = 'opacity: 1;transition: ease 1.5s;';
+            if (cover) cover.style.cssText = 'opacity: 1;transition: ease 1.5s;';
+        }, 4000);
+    </script>
+    <!-- JavaScript 依赖均延迟执行，避免外部 CDN 阻塞页面渲染 -->
+    <script defer src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
     <!-- 引入样式 -->
     <link rel="stylesheet" type="text/css" href="./css/style.css">
     <link rel="stylesheet" type="text/css" href="./css/font.css">
@@ -16,10 +30,13 @@
     <link rel="stylesheet" type="text/css" href="./css/mobile.css">
     <link rel="stylesheet" type="text/css" href="./css/animation.css">
     <!-- Izitoast -->
-    <link rel="stylesheet" href="https://lf3-cdn-tos.bytecdntp.com/cdn/expire-1-y/izitoast/1.4.0/css/iziToast.min.css">
-    <script type="text/javascript"
-        src="https://lf26-cdn-tos.bytecdntp.com/cdn/expire-1-y/izitoast/1.4.0/js/iziToast.min.js">
-    </script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/izitoast@1.4.0/dist/css/iziToast.min.css"
+        media="print" onload="this.media='all'">
+    <script defer src="https://cdn.jsdelivr.net/npm/izitoast@1.4.0/dist/js/iziToast.min.js"></script>
+    <!-- 本地脚本按依赖顺序加载 -->
+    <script defer src="./js/js.cookie.js"></script>
+    <script defer src="./js/main.js?v=20260727.1"></script>
+    <script defer src="./js/set.js"></script>
     <!-- IE Out -->
     <script>
         if ( /*@cc_on!@*/ false || (!!window.MSInputMethodContext && !!document.documentMode)) window.location.href =
@@ -553,10 +570,6 @@
     <noscript>
         <div class="noscript fixed-top">请开启 JavaScript</div>
     </noscript>
-    <!-- JS -->
-    <script type="text/javascript" src="./js/main.js"></script>
-    <script type="text/javascript" src="./js/set.js"></script>
-    <script type="text/javascript" src="./js/js.cookie.js"></script>
 </body>
 
 </html>

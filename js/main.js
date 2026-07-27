@@ -1,43 +1,65 @@
-//加载完成后执行
-window.addEventListener('load', function () {
-    //载入动画
-    $('#loading-box').attr('class', 'loaded');
-    $('#bg').css("cssText", "transform: scale(1);filter: blur(0px);transition: ease 1.5s;");
-    $('#section').css("cssText", "opacity: 1;transition: ease 1.5s;");
-    $('.cover').css("cssText", "opacity: 1;transition: ease 1.5s;");
+// 页面主体解析完成后立即结束载入动画，不等待天气、壁纸等外部资源。
+// 使用原生 DOM API，确保 jQuery 或其他第三方依赖加载失败时页面仍然可见。
+function finishLoading() {
+    var loadingBox = document.getElementById('loading-box');
+    var bg = document.getElementById('bg');
+    var section = document.getElementById('section');
+    var cover = document.querySelector('.cover');
+
+    if (loadingBox) loadingBox.classList.add('loaded');
+    if (bg) bg.style.cssText = 'transform: scale(1);filter: blur(0px);transition: ease 1.5s;';
+    if (section) section.style.cssText = 'opacity: 1;transition: ease 1.5s;';
+    if (cover) cover.style.cssText = 'opacity: 1;transition: ease 1.5s;';
+}
+
+function initPage() {
+    finishLoading();
 
     //用户欢迎
-    iziToast.settings({
-        timeout: 3000,
-        backgroundColor: '#ffffff40',
-        titleColor: '#efefef',
-        messageColor: '#efefef',
-        progressBar: false,
-        close: false,
-        closeOnEscape: true,
-        position: 'topCenter',
-        transitionIn: 'bounceInDown',
-        transitionOut: 'flipOutX',
-        displayMode: 'replace',
-        layout: '1'
-    });
-    setTimeout(function () {
-        iziToast.show({
-            title: hello,
-            message: '欢迎来到 Snavigation'
+    if (window.iziToast) {
+        iziToast.settings({
+            timeout: 3000,
+            backgroundColor: '#ffffff40',
+            titleColor: '#efefef',
+            messageColor: '#efefef',
+            progressBar: false,
+            close: false,
+            closeOnEscape: true,
+            position: 'topCenter',
+            transitionIn: 'bounceInDown',
+            transitionOut: 'flipOutX',
+            displayMode: 'replace',
+            layout: '1'
         });
-    }, 800);
+        setTimeout(function () {
+            iziToast.show({
+                title: hello,
+                message: '欢迎来到 Snavigation'
+            });
+        }, 800);
+    }
 
     //中文字体缓加载-此处写入字体源文件
     //先行加载简体中文子集，后续补全字集
     //由于压缩过后的中文字体仍旧过大，可转移至对象存储或 CDN 加载
-    const font = new FontFace(
-        "MiSans",
-        "url(" + "./font/MiSans-Regular.woff2" + ")"
-    );
-    document.fonts.add(font);
+    if ('FontFace' in window && document.fonts) {
+        const font = new FontFace(
+            "MiSans",
+            "url(" + "./font/MiSans-Regular.woff2" + ")"
+        );
+        document.fonts.add(font);
+    }
 
-}, false)
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initPage, { once: true });
+} else {
+    initPage();
+}
+
+// 最后一层兜底：即使其他脚本异常，也不会让遮罩永久停留。
+setTimeout(finishLoading, 4000);
 
 //进入问候
 now = new Date(), hour = now.getHours()
