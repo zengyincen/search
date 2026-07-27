@@ -105,18 +105,133 @@ function time() {
     t = setTimeout(time, 1000);
 }
 
-//获取天气
-//每日限量 100 次
-//请前往 https://www.tianqiapi.com/index/doc?version=v6 申请（免费）
-fetch('https://yiketianqi.com/api?unescape=1&version=v6&appid=43986679&appsecret=TksqGZT7')
-    .then(response => response.json())
-    .then(data => {
-        //$('#wea_text').html(data.wea + '&nbsp;' + data.tem_night + '℃' + '&nbsp;~&nbsp;' + data.tem_day + '℃')
-        $('#wea_text').text(data.wea)
-        $('#tem1').text(data.tem1)
-        $('#tem2').text(data.tem2)
-    })
-    .catch(console.error)
+// 自动定位并获取天气：先用 IP 粗略定位快速显示，允许浏览器定位后再更新精确天气。
+function getWeatherLabel(code) {
+    if (code === 0) return '晴';
+    if (code === 1 || code === 2) return '晴间多云';
+    if (code === 3) return '阴';
+    if (code === 45 || code === 48) return '雾';
+    if (code >= 51 && code <= 55) return '毛毛雨';
+    if (code === 56 || code === 57 || code === 66 || code === 67) return '冻雨';
+    if (code >= 61 && code <= 65) return '雨';
+    if (code >= 71 && code <= 75) return '雪';
+    if (code === 77) return '雪粒';
+    if (code >= 80 && code <= 82) return '阵雨';
+    if (code === 85 || code === 86) return '阵雪';
+    if (code === 95) return '雷雨';
+    if (code === 96 || code === 99) return '雷雨伴冰雹';
+    return '天气未知';
+}
+
+function fetchJson(url, timeout) {
+    var controller = typeof AbortController === 'function' ? new AbortController() : null;
+    var timer = controller ? setTimeout(function () {
+        controller.abort();
+    }, timeout) : null;
+
+    return fetch(url, {
+        cache: 'no-store',
+        signal: controller ? controller.signal : undefined
+    }).then(function (response) {
+        if (!response.ok) throw new Error('请求失败：' + response.status);
+        return response.json();
+    }).finally(function () {
+        if (timer) clearTimeout(timer);
+    });
+}
+
+function getBrowserLocation() {
+    return new Promise(function (resolve, reject) {
+        if (!navigator.geolocation) {
+            reject(new Error('浏览器不支持定位'));
+            return;
+        }
+
+        navigator.geolocation.getCurrentPosition(resolve, reject, {
+            enableHighAccuracy: false,
+            timeout: 8000,
+            maximumAge: 10 * 60 * 1000
+        });
+    });
+}
+
+function getIpLocation() {
+    return fetchJson(
+        'https://ipwho.is/?fields=success,city,region,country,latitude,longitude',
+        5000
+    ).then(function (data) {
+        if (!data.success || typeof data.latitude !== 'number' || typeof data.longitude !== 'number') {
+            throw new Error(data.message || 'IP 定位失败');
+        }
+        return data;
+    });
+}
+
+function renderWeather(latitude, longitude, locationName) {
+    var url = 'https://api.open-meteo.com/v1/forecast' +
+        '?latitude=' + encodeURIComponent(latitude) +
+        '&longitude=' + encodeURIComponent(longitude) +
+        '&current=temperature_2m,weather_code' +
+        '&daily=temperature_2m_max,temperature_2m_min' +
+        '&timezone=auto&forecast_days=1';
+
+    return fetchJson(url, 8000).then(function (data) {
+        if (!data.current || !data.daily || !data.daily.temperature_2m_max || !data.daily.temperature_2m_min) {
+            throw new Error('天气数据格式错误');
+        }
+
+        document.getElementById('location_text').textContent = locationName || '当前位置';
+        document.getElementById('wea_text').textContent = getWeatherLabel(data.current.weather_code);
+        document.getElementById('current_temp').textContent = Math.round(data.current.temperature_2m);
+        document.getElementById('tem1').textContent = Math.round(data.daily.temperature_2m_max[0]);
+        document.getElementById('tem2').textContent = Math.round(data.daily.temperature_2m_min[0]);
+    });
+}
+
+function showWeatherError() {
+    document.getElementById('location_text').textContent = '定位失败';
+    document.getElementById('wea_text').textContent = '天气暂不可用';
+}
+
+async function loadWeather() {
+    var preciseLocationPromise = getBrowserLocation().then(function (position) {
+        return { position: position };
+    }).catch(function (error) {
+        return { error: error };
+    });
+    var ipLocation = null;
+    var weatherLoaded = false;
+
+    try {
+        ipLocation = await getIpLocation();
+        await renderWeather(
+            ipLocation.latitude,
+            ipLocation.longitude,
+            ipLocation.city || ipLocation.region || ipLocation.country || '当前位置'
+        );
+        weatherLoaded = true;
+    } catch (error) {
+        console.warn('IP 定位天气加载失败', error);
+    }
+
+    try {
+        var preciseLocation = await preciseLocationPromise;
+        if (preciseLocation.error) throw preciseLocation.error;
+        var position = preciseLocation.position;
+        await renderWeather(
+            position.coords.latitude,
+            position.coords.longitude,
+            ipLocation && ipLocation.city ? ipLocation.city : '当前位置'
+        );
+        weatherLoaded = true;
+    } catch (error) {
+        console.info('未使用精确定位，保留 IP 定位天气', error);
+    }
+
+    if (!weatherLoaded) showWeatherError();
+}
+
+loadWeather();
     
 //Tab书签页
 $(function () {

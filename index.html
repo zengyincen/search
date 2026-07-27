@@ -35,7 +35,7 @@
     <script defer src="https://cdn.jsdelivr.net/npm/izitoast@1.4.0/dist/js/iziToast.min.js"></script>
     <!-- 本地脚本按依赖顺序加载 -->
     <script defer src="./js/js.cookie.js"></script>
-    <script defer src="./js/main.js?v=20260727.1"></script>
+    <script defer src="./js/main.js?v=20260727.2"></script>
     <script defer src="./js/set.js"></script>
     <!-- IE Out -->
     <script>
@@ -77,9 +77,10 @@
                         <span id="time_text">00<span id="point">:</span>00</span>
                         <span id="day">0&nbsp;月&nbsp;00&nbsp;日&nbsp;周一</span>
                     </div>
-                    <div class="weather">
-                        <span id="wea_text">N/A</span>&nbsp;<span id="tem2">N/A</span>°C&nbsp;~&nbsp;<span
-                            id="tem1">N/A</span>°C
+                    <div class="weather" title="天气会根据当前位置自动更新">
+                        <span id="location_text">正在定位</span>&nbsp;<span id="wea_text">--</span>&nbsp;<span
+                            id="current_temp">--</span>°C&nbsp;·&nbsp;<span id="tem2">--</span>°C&nbsp;~&nbsp;<span
+                            id="tem1">--</span>°C
                     </div>
                 </div>
                 <!-- 搜索框 -->
